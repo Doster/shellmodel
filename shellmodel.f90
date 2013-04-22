@@ -16,7 +16,7 @@ program diagonalize
   integer :: h,i,j,k, count                       ! Loop variables
   integer :: total                                ! count number of unbroken pairs of particles
   integer :: p,q,r,s                              ! Hamiltonian loop variables
-  integer :: pos1, pos2, phase, coef, matelem     ! ladder operator variables
+  integer :: pos1, pos2, phase, coef              ! ladder operator variables
   integer :: NSP                                  ! Number of single-particle states (read from text file)
   integer :: NSD                                  ! Maximum number of slater determinants
   integer :: NUM                                  ! Number of particles
@@ -254,12 +254,11 @@ program diagonalize
         ! Initializations
         ket(j,:) = bra(j,:)  ! re-initilize ket state
         phase = 0
-        count = 0       ! Phase counter
         pos1=0          ! position of first lowering operator
         test = .TRUE.
                  
         ! Calculate one substate of the ket state
-        call lower(ket(j,:), k, pos1, count, test)
+        call lower(ket(j,:), k, pos1, test)
         if (test .eqv. .FALSE.) then
 !!           print*,'lower cycle'
 !!           print*,'-----------------------------------------------------------'
@@ -268,7 +267,7 @@ program diagonalize
 
         call raise(ket(j,:), k, pos1)
 
-        call normal_order(ket(j,:), count, phase)
+        call normal_order(ket(j,:), phase)
         
         do i=1,total        ! Sum over rows (bra states)
            call orthonormality(bra(j,:), ket(i,:), coef)
@@ -367,20 +366,19 @@ program diagonalize
                  ! Initializations
                  ket(j,:) = bra(j,:)  ! re-initilize ket state
                  phase=0
-                 count = 0       ! Phase counter
                  pos1=0          ! position of first lowering operator
                  pos2=0          ! position of second lowering operator
                  test = .TRUE.
                  
                  ! Calculate one substate of the ket state
-                 call lower(ket(j,:), s, pos1, count, test)
+                 call lower(ket(j,:), s, pos1, test)
                  if (test .eqv. .FALSE.) then
 !!                    print*,'first lower cycle'
 !!                    print*,'-----------------------------------------------------------'
                     cycle
                  endif
                  
-                 call lower(ket(j,:), r, pos2, count, test)
+                 call lower(ket(j,:), r, pos2, test)
                  if (test .eqv. .FALSE.) then
 !!                    print*,'second lower cycle'
 !!                    print*,'-----------------------------------------------------------'
@@ -391,7 +389,7 @@ program diagonalize
                  
                  call raise(ket(j,:), p, pos1)
                  
-                 call normal_order(ket(j,:), count, phase)
+                 call normal_order(ket(j,:), phase)
                  
 !!                 print*, 'initial bra = ', bra(j,:)
 !!                 print*, 'final ket =', ket(j,:)
@@ -481,7 +479,7 @@ program diagonalize
      call tqli(d,e,dim,z)  
 
      WRITE(11,'(10(F10.2))') g, d(1), d(2), d(3), d(4), d(5), d(6)
-     print '(10(F10.2))', g, d(1), d(2), d(3), d(4), d(5), d(6)
+!!!     print '(10(F10.2))', g, d(1), d(2), d(3), d(4), d(5), d(6)
   enddo
 
 
@@ -555,8 +553,8 @@ contains
              a(i) = a(i+1)
              a(i+1) = temp
              swapped = .TRUE.
-             count = count + 1    ! count all swops                                                                                                                              
-          endif 
+             count = count + 1    ! count all swops
+          endif
        END DO
        IF (.NOT. swapped) then   !!!!!!!!!!!! What does this do???
           return  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! IS THIS RIGHT???
@@ -565,10 +563,13 @@ contains
   END SUBROUTINE bubble_sort
 
 
-  subroutine normal_order(ket, count, phase)
-    integer, intent(inout) :: count, phase
+  subroutine normal_order(ket, phase)
+    integer, intent(inout) :: phase
     integer, intent(inout), dimension(:) :: ket
-    
+ 
+    integer :: count
+    count = 0
+   
     ! Perform normal ordering
     call bubble_sort(ket, count)
 
@@ -586,12 +587,12 @@ contains
 
 ! Position is recorded by lower and used by raise
 
-  subroutine lower(ket, index, position, count, test)
+  subroutine lower(ket, index, position, test)
     integer, intent(in) :: index
     integer, intent(inout), dimension(:) :: ket
-    integer, intent(inout) :: count, position
+    integer, intent(inout) :: position
     logical, intent(inout) :: test
-    integer :: check, location
+    integer :: check
 
     check=0
 
